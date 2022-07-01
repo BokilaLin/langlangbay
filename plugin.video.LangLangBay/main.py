@@ -24,7 +24,7 @@ print("args is ")
 print(args)
 
 langlangbayUrl = "https://langlangbay.org"
-chinaqUrl = "https://chinaq.tv"
+chinaqUrl = "https://chinaq.at"
 imageUrl = "https://chinaq.img-ix.net/uploads/d"
 
 
@@ -37,13 +37,17 @@ def build_url(query):
         return None
 
 def Get(url):
+    print("trying url")
+    print(url)
     headers = {'user-agent': "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"}
-    req = requests.get(url, headers=headers)
+    req = requests.get(url, headers=headers, allow_redirects=True)
     req.encoding = 'utf-8'
     if req.status_code == 200:
         return req
     else:
-        req = requests.get(chinaqUrl+urlparse(url).path, headers=headers)
+        print("url failed, trying alternative")
+        altUrl = chinaqUrl+urlparse(url).path
+        req = requests.get(altUrl, headers=headers)
         req.encoding = 'utf-8'
         if req.status_code == 200:
             return req
@@ -66,7 +70,11 @@ def genList(url):
             path = location.path
         else:
             path = aTag['href']
-        drama = get_drama_detail(path)
+        try:
+            drama = get_drama_detail(path)
+        except Exception as e:
+            continue
+
         li = xbmcgui.ListItem(drama['title'] + "("+item.find('div', class_="episode").find('a').string+")")
         li.setArt({'poster': drama.pop('poster')})
         li.setInfo("video", drama)
@@ -82,7 +90,10 @@ def genList(url):
             path = location.path
         else:
             path = aTag['href']
-        drama = get_drama_detail(path)
+        try:
+            drama = get_drama_detail(path)
+        except Exception as e:
+            continue
         li = xbmcgui.ListItem(aTag.string)
         li.setArt({'poster': drama.pop('poster')})
         li.setInfo("video", drama)
@@ -120,7 +131,11 @@ def genListForCountry(country=None):
                     newUrl = build_url({'mode': 'genEps', 'path': path, 'domain': location.hostname})
                 else:
                     path = aTag['href']
-                    drama = get_drama_detail(path)
+                    try:
+                        drama = get_drama_detail(path)
+                    except:
+                        continue
+
                     li = xbmcgui.ListItem(drama['title'])
                     li.setArt({'poster': drama.pop('poster')})
                     li.setInfo("video", drama)
